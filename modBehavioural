@@ -1,0 +1,68 @@
+Option Explicit
+''Определяет, какие листы будут видимыми при завершении работы программы
+Const VISIBLE_SHEETS As String = "TDSheet,Data"
+
+Public Sub ToggleBook(toMakeFaster As Boolean, Optional enableEvents As Boolean = False)
+    If toMakeFaster Then
+        ShowSheets
+    Else
+        HideSheets VISIBLE_SHEETS
+    End If
+    ToggleApplication toMakeFaster, enableEvents
+End Sub
+
+'В одной функции работает переключатель на ускорение и замедление кода. Параметр EnableEvents стоит для тех случаев, когда события должны производится
+Private Sub ToggleApplication(toMakeFaster As Boolean, Optional enableEvents As Boolean = False)
+    With Application
+        .Application.IgnoreRemoteRequests = toMakeFaster
+        .ScreenUpdating = Not toMakeFaster
+        .enableEvents = IIf(enableEvents, True, Not toMakeFaster)
+        .DisplayAlerts = Not toMakeFaster
+        Select Case toMakeFaster
+            Case True
+                .Calculation = xlCalculationManual
+                .StatusBar = "Для формирования отчета потребуется подождать..."
+            Case False
+                .Application.Calculation = xlCalculationAutomatic
+                .Application.StatusBar = Empty
+                .Application.StatusBar = "Выполение кода завершено"
+        End Select
+    End With
+    Dim thisWb As Workbook, ws As Worksheet
+    Set thisWb = ThisWorkbook
+     'Не отображаем границы ячеек
+    For Each ws In thisWb.Sheets
+    'Если лист типа диаграмма то разбивать страницы не надо
+        If ws.Type <> 3 Then ws.DisplayPageBreaks = False
+    Next
+End Sub
+
+Private Sub HideSheets(whichSheetsToRemain As String)
+    Dim wb As Workbook
+    Set wb = ThisWorkbook
+    Dim ws As Worksheet
+    whichSheetsToRemain = whichSheetsToRemain
+    Worksheets(Split(whichSheetsToRemain, ",")(0)).Activate
+    For Each ws In wb.Worksheets
+        If InStr(whichSheetsToRemain, ws.name) Then
+            ws.Visible = xlSheetVisible
+        Else
+            ws.Visible = xlSheetHidden
+        End If
+    Next ws
+End Sub
+'Показывает все листы, чтоб не ругалось, что лист недоступен
+Private Sub ShowSheets()
+    Dim ws As Worksheet
+    For Each ws In ThisWorkbook.Worksheets
+        ws.Visible = xlSheetVisible
+    Next ws
+End Sub
+
+''Получает последнюю строку через просмотр снизу вверх диапазона данных. rowStart по стандарту 2,
+''потому как эта функция может часто используется при удалении данных, и если данных нет, то строку колонок брать не будет
+Public Function getRowEnd(ws As Excel.Worksheet, Optional columnToCheckBy As Integer = 1, Optional rowStart As Long = 2) As Long
+    With ws
+        getRowEnd = Application.WorksheetFunction.Max(rowStart, .Cells(.Rows.Count, columnToCheckBy).End(xlUp).row)
+    End With
+End Function
