@@ -1,0 +1,155 @@
+Option Explicit
+''''Позволяет проходя по конкретной ячейке делать нормальный для неё вертикальный автофит. Не моё, чесслово/Not mine creation
+Public Sub RowColHeightForRange(rc As Range, Optional bRowHeight As Boolean = True, Optional bNotLess As Boolean = False)
+
+    Dim cCell As Range, maxRowheight() As Double, maxColWidht() As Double, ElDbl As Variant, iPercentFrontSize As Integer
+    Dim i As Long, j As Integer
+    If bRowHeight Then
+        ReDim maxRowheight(1 To rc.Rows.Count)
+       For i = 1 To rc.Rows.Count
+             If Not bNotLess Then
+                maxRowheight(i) = 0
+            Else
+               maxRowheight(i) = rc.Rows(i).RowHeight
+            End If
+        Next i
+        
+        For i = 1 To rc.Rows.Count
+            For j = 1 To rc.Columns.Count
+                If rc.Rows(i).EntireRow.Hidden = False Then
+                    iPercentFrontSize = Round(rc.Cells(i, j).Font.Size / 10, 0)
+                    rc.Cells(i, j).Font.Size = rc.Cells(i, j).Font.Size + iPercentFrontSize
+                    If rc.Cells(i, j).MergeCells Then
+                        Call RowColHeightForContent(rc.Cells(i, j))
+                    Else
+                        rc.Rows(i).AutoFit
+                    End If
+                    If maxRowheight(i) < rc.Rows(i).RowHeight Then maxRowheight(i) = rc.Rows(i).RowHeight
+                    rc.Cells(i, j).Font.Size = rc.Cells(i, j).Font.Size - iPercentFrontSize
+                End If          ' If rc.Rows(i).EntireRow.Hidden = False Then
+            Next j
+        Next i
+        
+        For i = 1 To rc.Rows.Count
+            rc.Rows(i).RowHeight = maxRowheight(i)
+        Next i
+    Else
+            
+        ReDim maxColWidht(1 To rc.Columns.Count)
+        
+        For j = 1 To rc.Columns.Count
+            If Not bNotLess Then
+                maxColWidht(j) = 0
+            Else
+                maxColWidht(j) = rc.Columns(j).ColumnWidth
+            End If
+        Next j
+        
+        For i = 1 To rc.Rows.Count
+            For j = 1 To rc.Columns.Count
+                If rc.Columns(j).EntireColumn.Hidden = False Then
+                    iPercentFrontSize = Round(rc.Cells(i, j).Font.Size / 10, 0)
+                    rc.Cells(i, j).Font.Size = rc.Cells(i, j).Font.Size + iPercentFrontSize
+                    If rc.Cells(i, j).MergeCells Then
+                        Call RowColHeightForContent(rc.Cells(i, j), False)
+                    Else
+                        rc.Columns(j).AutoFit
+                    End If
+                    If maxColWidht(j) < rc.Columns(j).ColumnWidth Then maxColWidht(j) = rc.Columns(j).ColumnWidth
+                    rc.Cells(i, j).Font.Size = rc.Cells(i, j).Font.Size - iPercentFrontSize
+                End If                      'If rc.Columns(j).EntireColumn.Hidden = False Then
+            Next j
+        Next i
+        
+        For j = 1 To rc.Columns.Count
+            rc.Columns(j).ColumnWidth = maxColWidht(j)
+        Next j
+    End If              'If bRowHeight Then
+'Call Ended
+End Sub
+Private Sub RowColHeightForContent(rc As Range, Optional bRowHeight As Boolean = True)
+'rc -         ячейка, высоту строки или ширину столбца которой необходимо подобрать
+'bRowHeight - True - если необходимо подобрать высоту строки
+'             False - если необходимо подобрать ширину столбца
+    Dim OldR_Height As Double, OldC_Widht As Double
+    Dim MergedR_Height As Double, MergedC_Widht As Double
+    Dim CurrCell As Range
+    Dim ih As Integer
+    Dim iw As Integer
+    Dim NewR_Height As Double, NewC_Widht As Double
+    Dim ActiveCellHeight As Double
+    
+    Dim rngFirstCellInMerge As Range
+ On Error GoTo Errno
+    If rc.MergeCells Then
+        With rc.MergeArea 'если ячейка объединена
+            Set rngFirstCellInMerge = Range(.Address).Cells(1, 1)           'Присваиваем первую ячейку диапозона объеденённой ячейки
+            If rngFirstCellInMerge.Address = rc.Address Then                              ' если мы получаем не первую ячейку то не выполняем дальнейшие операции
+                'запоминаем кол-во столбцов
+                'iw = .Columns(.Columns.Count).Column - rc.Column + 1
+                iw = .Columns.Count
+                'запоминаем кол-во строк.
+                'ih = .Rows(.Rows.Count).row - rc.row + 1
+                ih = .Rows.Count
+                'Определяем высоту и ширину объединения ячеек
+                MergedR_Height = 0
+                For Each CurrCell In .Rows
+                    MergedR_Height = CurrCell.RowHeight + MergedR_Height
+                Next
+                MergedC_Widht = 0
+                For Each CurrCell In .Columns
+                    MergedC_Widht = CurrCell.ColumnWidth + MergedC_Widht
+                Next
+                'запоминаем высоту и ширину первой ячейки из объединенных
+                OldR_Height = .Cells(1, 1).RowHeight
+                OldC_Widht = .Cells(1, 1).ColumnWidth
+                'отменяем объединение ячеек
+                .MergeCells = False
+                
+                'запоминаем высоту и ширину первой ячейки из объединенных
+                OldR_Height = .Cells(1, 1).RowHeight
+                OldC_Widht = .Cells(1, 1).ColumnWidth
+                
+                'назначаем новую высоту и ширину для первой ячейки
+                '.Cells(1).RowHeight = MergedR_Height
+                '.Cells(1, 1).EntireColumn.ColumnWidth = MergedC_Widht
+                If MergedR_Height < 409 Then
+                    rc.Rows(1).RowHeight = MergedR_Height
+                Else
+                    rc.Rows(1).RowHeight = 409
+                End If
+                If MergedC_Widht < 255 Then
+                    rc.Columns(1).ColumnWidth = MergedC_Widht
+                Else
+                    rc.Columns(1).ColumnWidth = 255
+                End If
+                'если необходимо изменить высоту строк
+                If bRowHeight Then
+                    .WrapText = True 'раскомментировать, если необходимо принудительно выставлять перенос текста
+                    .EntireRow.AutoFit
+                    NewR_Height = .Cells(1).RowHeight    'запоминаем высоту строки
+                    .MergeCells = True
+    '                If OldR_Height < (NewR_Height / ih) Then
+                        .RowHeight = NewR_Height / ih + 1
+    '                Else
+    '                    .RowHeight = OldR_Height
+    '                End If
+                    'возвращаем ширину столбца первой ячейки
+                    .Cells(1, 1).EntireColumn.ColumnWidth = OldC_Widht
+                Else 'если необходимо изменить ширину столбца
+                    .EntireColumn.AutoFit
+                    NewC_Widht = .Cells(1).EntireColumn.ColumnWidth    'запоминаем ширину столбца
+                    .MergeCells = True
+    '                If OldC_Widht < (NewC_Widht / iw) Then
+                        .ColumnWidth = NewC_Widht / iw + 1
+    '                Else
+    '                    .ColumnWidth = OldC_Widht
+    '                End If
+                    'возвращаем высоту строки первой ячейки
+                    .Cells(1, 1).RowHeight = OldR_Height
+                End If
+            End If          'If rngFirstCellInMerge = rc Then
+        End With
+    End If
+Errno:
+End Sub
