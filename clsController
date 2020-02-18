@@ -1,0 +1,54 @@
+Option Explicit
+
+Implements IAggregator
+Public agreements As Object, Total As Double, Losses As Double
+
+Private Sub Class_Initialize()
+    Set agreements = CreateObject("Scripting.Dictionary")
+    Total = 0
+    Losses = 0
+End Sub
+'''Если в коллекции есть такой объект, то его и возвращаем
+Private Function factoryAgreement(dataModel As shDataModel, row As Long) As datAgreement
+    Dim res As datAgreement
+    Set res = New datAgreement
+    res.Init dataModel
+    Dim valChecked As String
+    
+    valChecked = makeKey(res)
+    If agreements.Exists(valChecked) Then
+        Set res = agreements(valChecked)
+    Else
+        agreements.Add valChecked, res
+    End If
+    Set factoryAgreement = res
+End Function
+
+Private Function makeKey(obj As datAgreement) As String
+    'If obj.AgreementID = "utekcopy_e5bb952eb4d44fbd95ba7005152ba926" Then Stop
+    makeKey = obj.AgreementID
+End Function
+
+'Проходим таблицу, загоняяя в объекты и коллекции вс енужные вещи, а потом печатаем
+Public Sub proccessTable(dataModel As shDataModel, viewData As shDataView)
+    Dim row As Long
+    Dim agreement As datAgreement
+    For row = dataModel.rowStartOfData To dataModel.DataRowCount
+        Application.StatusBar = "Анализируем строку " & row & " из " & dataModel.DataRowCount
+        dataModel.GetRowData (row)
+        Set agreement = factoryAgreement(dataModel, row)
+'        Visit.proccess dataModel
+        agreement.proccessTable dataModel
+    Next row
+    
+    IAggregator_recalculateSums
+End Sub
+
+Private Sub IAggregator_recalculateSums()
+    Dim agreement As datAgreement, i As Integer
+    For i = 0 To agreements.Count - 1
+        Set agreement = agreements.items()(i)
+        agreement.IAggregator_recalculateSums
+        Total = Total + agreement.Total
+    Next
+End Sub
