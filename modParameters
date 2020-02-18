@@ -1,0 +1,21 @@
+Option Explicit
+'Просто берет переменную с листа парамдаты на основе айди
+Public Property Get getFromParamData(propertyID As String) As String
+    Const colPropertyID As Integer = 1
+    Const colPropertyName As Integer = 2
+    Const colValue As Integer = 3
+    Dim rowEnd As Long, ws As Worksheet, rowFounded As Long
+    Set ws = ThisWorkbook.Worksheets("ParamData")
+    rowEnd = getRowEnd(ws, colPropertyID)
+    With ws
+        rowFounded = 0
+        On Error Resume Next
+        rowFounded = Application.WorksheetFunction.Match(propertyID, Range(.Cells(1, colPropertyID), .Cells(rowEnd, colPropertyID)), 0)
+        On Error GoTo 0
+        If rowFounded = 0 Then
+            MsgBox "Не найден " & propertyID & " на листе " & ws.name
+            Exit Property
+        End If
+        getFromParamData = .Cells(rowFounded, colValue)
+    End With
+End Property
