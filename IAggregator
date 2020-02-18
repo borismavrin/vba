@@ -1,0 +1,6 @@
+Option Explicit
+
+Dim collected As Object
+Public Sub recalculateSums()
+
+End Sub
