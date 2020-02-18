@@ -1,0 +1,38 @@
+Option Explicit
+
+Const TOCHECK = "already was launched"
+Const addressToCheck As String = "G1"
+Const sheetToCheck As String = "ØàáëîíVBA1"
+Property Get wasPrepared() As Boolean
+    Dim rngToCheck As Range
+    Set rngToCheck = ThisWorkbook.Worksheets(sheetToCheck).Range(addressToCheck)
+    wasPrepared = rngToCheck.Value = TOCHECK
+    rngToCheck = TOCHECK
+End Property
+
+Private Sub Workbook_Open()
+    If thereAreNeededSheets And Not wasPrepared Then
+        Call prepareBook.main
+    Else
+        Call doNothing
+    End If
+End Sub
+
+Private Sub doNothing()
+
+End Sub
+
+Property Get thereAreNeededSheets()
+    Dim res As Boolean, val As String
+    On Error Resume Next
+    val = ThisWorkbook.Worksheets("Data").name
+    res = Err.Number = 0
+    On Error GoTo 0
+    thereAreNeededSheets = res
+End Property
+
+Public Sub clearCheckedValue()
+    Dim rngToCheck  As Range
+    Set rngToCheck = ThisWorkbook.Worksheets(sheetToCheck).Range(addressToCheck)
+    rngToCheck = ""
+End Sub
