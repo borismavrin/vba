@@ -1,0 +1,158 @@
+Option Explicit
+
+Public sData As Excel.Worksheet
+Public DataRowCount As Long 'Количество данных в наборе дата
+Public DataColumCount As Integer 'Количество строк в наборе данных
+Public rowStartOfData As Long 'Первая строка с данными- будет 2
+
+ 'Не нужные поля будут закоменчены
+
+'-----------------------------------------------------------------------------------
+'------------------------------------------------------------- Индекс колонки поля
+'-----------------------------------------------------------------------------------
+Dim AgreementCounteragentName_Col As Integer, DeliveryPointCaption_Col As Integer, Location_Col As Integer, Substantion_Col As Integer, MechanismNumber_Col As Integer, MechanismType_Col As Integer, _
+    ReadingZoneName_Col As Integer, CurrentReadingDate_Col As Integer, Ratio_Col As Integer, Total_Col As Integer, AgreementNumber_Col As Integer, PreviosReadingDate_Col As Integer, _
+    PreviosReading_Col As Integer, CurrentReading_Col As Integer, Consumption_Col As Integer, Losses_Col As Integer, AgreementID_Col As Integer
+
+
+
+' ------------------------------------------------------------------------------------------------------------------------------------
+' -------------------------------------------------------------------------- Поля данных ---------------------------------------------
+' ------------------------------------------------------------------------------------------------------------------------------------
+
+Public AgreementCounteragentName As Range, DeliveryPointCaption As Range, Location As Range, Substantion As Range, ReadingZoneName As Range, _
+    CurrentReadingDate As Range, Ratio As Range, Total As Range, AgreementNumber As Range, PreviosReadingDate As Range, PreviosReading As Range, MechanismNumber As Range, MechanismType As Range, _
+    CurrentReading As Range, Consumption As Range, Losses As Range, AgreementID As Range
+
+
+
+
+
+
+
+
+'-------------------------------------- Дополнительные поля -----------------------------------
+'Public Number_next As Range, CounteragentCaption_next As Range, AccountingObjectCaption_next As Range, Department_next As Range, Location1_next As Range, Location2_next As Range, Location3_next As Range, Location4_next As Range, Location5_next As Range, Location6_next As Range, MechanismNumber_next As Range, MechanismType_next As Range, MechanismTransformationRatio_next As Range, TransformerTHCaption_next As Range, TransformerTHTransformationRatio_next As Range, TransformerTTCaption_next As Range, TransformerTTTransformationRatio_next As Range
+
+'-------------------------------------- Вычисляемое поле --------------------------------------
+
+Private Sub SetColName()
+    Dim FindNameCol As Range
+    For Each FindNameCol In Range(sData.Cells(1, 1), sData.Cells(1, Me.DataColumCount))
+        Select Case FindNameCol
+            Case "AgreementCounteragentName":  AgreementCounteragentName_Col = FindNameCol.Column
+            Case "DeliveryPointCaption":  DeliveryPointCaption_Col = FindNameCol.Column
+            Case "Location":  Location_Col = FindNameCol.Column
+            Case "Substantion":  Substantion_Col = FindNameCol.Column
+            Case "MechanismNumber":  MechanismNumber_Col = FindNameCol.Column
+            Case "ReadingZoneName":  ReadingZoneName_Col = FindNameCol.Column
+            Case "CurrentReadingDate":  CurrentReadingDate_Col = FindNameCol.Column
+            Case "Ratio":  Ratio_Col = FindNameCol.Column
+            Case "Total":  Total_Col = FindNameCol.Column
+            Case "AgreementNumber":  AgreementNumber_Col = FindNameCol.Column
+            Case "PreviosReadingDate":  PreviosReadingDate_Col = FindNameCol.Column
+            Case "PreviosReading":  PreviosReading_Col = FindNameCol.Column
+            Case "MechanismNumber":  MechanismNumber_Col = FindNameCol.Column
+            Case "MechanismType":  MechanismType_Col = FindNameCol.Column
+            Case "CurrentReading":  CurrentReading_Col = FindNameCol.Column
+            Case "Consumption":  Consumption_Col = FindNameCol.Column
+            Case "Losses":  Losses_Col = FindNameCol.Column
+            Case "AgreementID":  AgreementID_Col = FindNameCol.Column
+
+
+    End Select
+    Next FindNameCol
+End Sub
+
+Public Sub GetRowData(j As Long)
+    With sData
+        Set AgreementCounteragentName = .Cells(j, AgreementCounteragentName_Col)
+        Set DeliveryPointCaption = .Cells(j, DeliveryPointCaption_Col)
+        Set Location = .Cells(j, Location_Col)
+        Set Substantion = .Cells(j, Substantion_Col)
+        Set MechanismNumber = .Cells(j, MechanismNumber_Col)
+        Set ReadingZoneName = .Cells(j, ReadingZoneName_Col)
+        Set CurrentReadingDate = .Cells(j, CurrentReadingDate_Col)
+        Set Ratio = .Cells(j, Ratio_Col)
+        Set Total = .Cells(j, Total_Col)
+        Set AgreementNumber = .Cells(j, AgreementNumber_Col)
+        Set PreviosReadingDate = .Cells(j, PreviosReadingDate_Col)
+        Set PreviosReading = .Cells(j, PreviosReading_Col)
+        Set MechanismNumber = .Cells(j, MechanismNumber_Col)
+        Set MechanismType = .Cells(j, MechanismType_Col)
+        Set CurrentReading = .Cells(j, CurrentReading_Col)
+        Set Consumption = .Cells(j, Consumption_Col)
+        Set Losses = .Cells(j, Losses_Col)
+        Set AgreementID = .Cells(j, AgreementID_Col)
+
+    '-------------------------------------- Дополнительные поля -----------------------------------
+
+    End With
+End Sub
+
+
+ '-------------------------------------- Вычисляемое поле -------------------------------------
+
+' Cоздаем новые поля в листе данных для проведения сортировок и тд
+'Private Sub CreateFields()
+'    Dim i As Long
+'    'Присваивание порядковых номеров для новых столбцов
+'    NumbSeparation_Col = Me.DataColumCount + 2
+'    NumbCell_Col = Me.DataColumCount + 3
+'    KolNum_col = NumbCell_Col
+'    With sData
+'    ' Добовляем наименование дополнительного поля
+'       .Cells(1, NumbSeparation_Col) = "NumbSeparation"
+'        .Cells(1, NumbCell_Col) = "NumbCell"
+'    'Заполняем поля содержимым
+'        For i = 2 To Me.DataRowCount
+'            .Cells(i, NumbSeparation_Col) = Crutch.GetNumbSeparation(.Cells(i, Substantion_Col), .Cells(i, Feeder_Col))
+'            .Cells(i, NumbCell_Col) = GetNubmbCell(.Cells(i, Feeder_Col))
+'        Next i
+'    End With
+'End Sub
+
+'Private Sub Sort_Data1()
+'    With sData.Sort
+'        .SortFields.Clear
+'        .SortFields.Add Key:=Range(sData.Cells(1, Accessory_Col), sData.Cells(DataRowCount, Accessory_Col)), SortOn:=xlSortOnValues, Order:=xlAscending, DataOption:=xlSortNormal
+'        .SortFields.Add Key:=Range(sData.Cells(1, AgreementCounteragentName_Col), sData.Cells(DataRowCount, AgreementCounteragentName_Col)), SortOn:=xlSortOnValues, Order:=xlAscending, DataOption:=xlSortNormal
+'            .SetRange Range(sData.Cells(1, 1), sData.Cells(DataRowCount, DataColumCount))
+'            .Header = xlYes
+'            .MatchCase = False
+'            .Orientation = xlTopToBottom
+'            .SortMethod = xlPinYin
+'            .Apply
+'    End With
+'End Sub
+
+Private Sub GetColumnsForSheetsData()
+'    Dim j As Integer
+'    j = 1
+'    Do While sData.Cells(1, j) <> Empty
+'    j = j + 1
+'    Loop
+'    DataColumCount = j - 1
+    With sData
+        DataColumCount = sData.Cells(1, sData.Columns.Count).End(xlToLeft).Column
+    End With
+
+End Sub
+
+Private Sub GetRowsForSheetsData()
+    DataRowCount = getRowEnd(sData, , 2)
+End Sub
+
+Private Sub Class_Initialize()
+    Set sData = ThisWorkbook.Sheets("Data")
+    rowStartOfData = 2
+    GetColumnsForSheetsData
+    SetColName
+    GetRowsForSheetsData
+    
+    'Me.CreateFields            ' Создание новых полей в листе с данными
+    'Sort_Data1             'Сортировка листа
+    
+'    sData.Columns(MechanismVerificationDate_Col).NumberFormat = "m/d/yyyy"
+End Sub
+
