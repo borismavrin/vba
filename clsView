@@ -1,0 +1,207 @@
+Option Explicit
+
+Dim shView As Worksheet, shTemplate As Worksheet
+Dim rowCurrent As Long, rngFormat As Range, newRange As Range
+Const ROW_START As Long = 4
+
+
+Public col_номер_договора As Integer
+Public col_номер_пу As Integer
+Public col_период_код_периода As Integer
+Public col_дата As Integer
+Public col_начальные_показания_день As Integer
+Public col_начальные_показания_ночь As Integer
+Public col_начальные_показания_пик As Integer
+Public col_начальные_показания_полупик As Integer
+Public col_конечные_показания_день As Integer
+Public col_конечные_показания_ночь As Integer
+Public col_конечные_показания_пик As Integer
+Public col_конечные_показания_полупик As Integer
+Public col_расход_квт As Integer
+Public col_тип_строки As Integer
+Public col_тип_расчета As Integer
+Public col_потери_квт As Integer
+
+Private colToSortBy As Integer
+
+'colNumVisit As Integer, colName As Integer, colTotalElectro As Integer, colLosses As Integer
+
+Enum typeOfformatRange
+    typeOfformatRange_concreteNotes
+    typeOfformatRange_groupAccesosory
+    typeOfformatRange_groupContragent
+    typeOfformatRange_totals
+End Enum
+
+Private Type rowsForGroups
+    rowStart As Long
+    rowEnd As Long
+End Type
+
+Private Sub Class_Initialize()
+    rowCurrent = ROW_START + 1
+    Set shView = ThisWorkbook.Worksheets("TDSheet")
+    col_номер_договора = 2
+    col_номер_пу = 4
+    col_период_код_периода = 5
+    col_дата = 6
+    col_начальные_показания_день = 7
+    col_начальные_показания_ночь = 8
+    col_начальные_показания_пик = 9
+    col_начальные_показания_полупик = 10
+    col_конечные_показания_день = 11
+    col_конечные_показания_ночь = 12
+    col_конечные_показания_пик = 13
+    col_конечные_показания_полупик = 14
+    col_расход_квт = 15
+    col_тип_строки = 16
+    col_тип_расчета = 17
+    col_потери_квт = 18
+    
+    
+    colToSortBy = col_номер_договора
+
+End Sub
+
+Private Property Get getTable() As Range
+    With shView
+        Dim rowEnd As Long
+        rowEnd = getRowEnd(shView, col_номер_договора)
+        Set getTable = Range(.Cells(ROW_START, col_номер_договора), .Cells(rowEnd, col_потери_квт))
+    End With
+End Property
+
+'Процедура печатает на лист всю таблицу. Здесь же и группировка происходит
+Public Sub printData(datController As shDataController)
+    'Dim iterAccessory As datAccessory, itemContragent As datContragent, itemTariff As datTariff
+    
+    Dim iterAgreement As datAgreement, counterAgreement As Integer, rowsAgreement As rowsForGroups
+    
+    Dim rngToFormat As Range
+    Application.StatusBar = "Создаем отчет..."
+    
+    
+    Dim counterMechanism As Integer, rowsMechanism As rowsForGroups, iterMechanism As datMechanism
+    rowsMechanism.rowStart = rowCurrent
+    For counterAgreement = 0 To datController.agreements.Count - 1
+        'Application.StatusBar = "Формируем строку №" & counterAgreement + 1 & " из " & datController.agreements.Count
+        'Загоняем в переменную- сохранится интеллисенс
+        Set iterAgreement = datController.agreements.items()(counterAgreement)
+        'печатаем строку
+        'rowsAgreement.rowStart = rowCurrent
+        'iterAgreement.IPrintableAsRow_printRow Me
+        'rowsAgreement.rowEnd = rowCurrent - 1
+        'Set rngToFormat = shView.Range(rowsAgreement.rowStart & ":" & rowsAgreement.rowEnd)
+        For counterMechanism = 0 To iterAgreement.Mechanisms.Count - 1
+            
+            Set iterMechanism = iterAgreement.Mechanisms.items()(counterMechanism)
+            iterMechanism.IPrintableAsRow_printRow Me
+        Next
+    Next
+    rowsMechanism.rowEnd = rowCurrent - 1
+    sortTable
+    With shView
+        Set rngToFormat = .Range(rowsMechanism.rowStart & ":" & rowsMechanism.rowEnd)
+            formatRange typeOfformatRange_concreteNotes, rngToFormat
+        Dim rngHeight As Range, theCell As Range
+        Set rngHeight = Range(.Cells(ROW_START + 1, col_номер_пу), .Cells(rowsMechanism.rowEnd, col_номер_пу))
+        rngHeight.WrapText = True
+        For Each theCell In rngHeight
+            RowColHeightForContent1.RowColHeightForRange theCell
+        Next
+    End With
+    'ПОДВАЛ
+    setHeader
+
+    'Меняем шаблон в шапке на нужное значение
+End Sub
+
+Private Sub sortTable()
+    Dim lastrow As Long
+    lastrow = getRowEnd(shView, colToSortBy)
+    getTable.Sort key1:=Range(shView.Cells(ROW_START, colToSortBy), shView.Cells(lastrow, colToSortBy)), _
+                    order1:=xlAscending, Header:=xlYes
+End Sub
+
+Private Sub addPostFix()
+    Dim wsWithFormats As Worksheet, rngPostFix As Range
+    Set wsWithFormats = ThisWorkbook.Worksheets("Шаблон постфикс")
+    Const rowTill As Integer = 6
+    Set rngPostFix = wsWithFormats.Range("1:" & rowTill)
+    rngPostFix.Copy
+    shView.Range("A" & rowCurrent).PasteSpecial xlAll
+    rowCurrent = rowCurrent + rowTill
+End Sub
+
+Private Sub addSubTotals(sumTotal As Double)
+'    formatRange typeOfformatRange_totals, shView.Range(rowCurrent & ":" & rowCurrent)
+'    With shView
+'        .Cells(rowCurrent, col_num__лс) = "ВСЕГО:"
+'        .Cells(rowCurrent, col_потребление_квтч) = sumTotal
+'    End With
+'    rowCurrent = rowCurrent + 1
+End Sub
+
+Private Sub splitLittleBitParts()
+    rowCurrent = rowCurrent + 2
+End Sub
+
+Private Sub formatRange(typeOfFormat As typeOfformatRange, rangeToFormat As Range)
+    Dim wsWithFormats As Worksheet, rngFormat As Range
+    Set wsWithFormats = ThisWorkbook.Worksheets("Шаблон строк")
+    Select Case typeOfFormat
+        Case typeOfformatRange_concreteNotes
+            Set rngFormat = wsWithFormats.Range("1:1")
+        Case typeOfformatRange_totals
+            Set rngFormat = wsWithFormats.Range("3:3")
+    End Select
+    rngFormat.Copy
+    rangeToFormat.PasteSpecial xlPasteFormats
+End Sub
+''''Процедуры печати объектов. Вызваются из самих классов
+
+Public Sub printAgreement(obj As datAgreement)
+'    Dim wsTemplatePrefix As Worksheet
+'    Set wsTemplatePrefix = ThisWorkbook.Worksheets("Шаблон префикс")
+'    Const rowTill As Integer = 6
+'    wsTemplatePrefix.Range("1:" & rowTill).Copy
+'    With shView
+'        .Range("A" & rowCurrent).PasteSpecial xlPasteAll
+'        .Cells(rowCurrent, col_num__лс) = Replace(.Cells(rowCurrent, col_num__лс), "[ContragentName]", obj.nameContragent)
+'        .Cells(rowCurrent + 1, col_num__лс) = Replace(.Cells(rowCurrent + 1, col_num__лс), "[ContragentAddress]", obj.addressContragent)
+'    End With
+'
+'    rowCurrent = rowCurrent + rowTill
+End Sub
+
+Public Sub printCommon(obj As datMechanism, Optional rowRelativeInGroup As Long = 1)
+    With shView
+        .Cells(rowCurrent, col_номер_договора) = obj.agreement.номер_договора
+        .Cells(rowCurrent, col_номер_пу) = obj.номер_пу
+        .Cells(rowCurrent, col_период_код_периода) = obj.период_код_периода
+        .Cells(rowCurrent, col_дата) = obj.дата
+        .Cells(rowCurrent, col_начальные_показания_день) = obj.начальные_показания_день
+        .Cells(rowCurrent, col_начальные_показания_ночь) = obj.начальные_показания_ночь
+        .Cells(rowCurrent, col_начальные_показания_пик) = obj.начальные_показания_пик
+        .Cells(rowCurrent, col_начальные_показания_полупик) = obj.начальные_показания_полупик
+        .Cells(rowCurrent, col_конечные_показания_день) = obj.конечные_показания_день
+        .Cells(rowCurrent, col_конечные_показания_ночь) = obj.конечные_показания_ночь
+        .Cells(rowCurrent, col_конечные_показания_пик) = obj.конечные_показания_пик
+        .Cells(rowCurrent, col_конечные_показания_полупик) = obj.конечные_показания_полупик
+        .Cells(rowCurrent, col_расход_квт) = obj.расход_квт
+        .Cells(rowCurrent, col_тип_строки) = obj.тип_строки
+        .Cells(rowCurrent, col_тип_расчета) = "1"
+        .Cells(rowCurrent, col_потери_квт) = obj.потери_квт
+    End With
+    rowCurrent = rowCurrent + 1
+End Sub
+
+Public Sub setHeader()
+'    Dim cellWithDate As Range
+'    Set cellWithDate = shView.Cells(2, 2)
+'    cellWithDate.Value2 = Replace(cellWithDate, "[Period]", LCase(getFromParamData("Period")))
+    shView.Activate
+    shView.Cells(ROW_START + 1, 1).Select
+    ActiveWindow.FreezePanes = False
+    ActiveWindow.FreezePanes = True
+End Sub
