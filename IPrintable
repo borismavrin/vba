@@ -1,0 +1,5 @@
+Option Explicit
+'Интерфейс для классов по печати. В принципе, особо не нужен, но так прикольней
+Public Sub printRow(dataView As shDataView, Optional numeration As Long = 0)
+
+End Sub
