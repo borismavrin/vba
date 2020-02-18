@@ -1,0 +1,71 @@
+Option Explicit
+
+Implements IAggregator
+Implements IPrintableAsRow
+Public num__лс As String, AgreementID As String, nameContragent As String, addressContragent As String, номер_договора As String
+Public Mechanisms As Object, Total As Double, Losses As Double
+
+Private Sub Class_Initialize()
+    Set Mechanisms = CreateObject("Scripting.Dictionary")
+    Total = 0
+    Losses = 0
+End Sub
+
+Public Sub Init(dataModel As shDataModel)
+    num__лс = dataModel.AgreementNumber
+    nameContragent = dataModel.AgreementCounteragentName
+    addressContragent = dataModel.Location
+    AgreementID = dataModel.AgreementID
+    номер_договора = dataModel.AgreementNumber
+End Sub
+
+'''Если в коллекции есть такой объект, то его и возвращаем
+Private Function factoryMechanism(dataModel As shDataModel) As datMechanism
+    Dim res As datMechanism
+    Set res = New datMechanism
+    res.Init dataModel, Me
+    Dim valChecked As String
+    
+    valChecked = makeKey(res)
+    If Mechanisms.Exists(valChecked) Then
+        'If isNewerVersion(res, Mechanisms(valChecked)) Then
+         '   Set Mechanisms(valChecked) = res
+        'End If
+        Set res = Mechanisms(valChecked)
+    Else
+        Mechanisms.Add valChecked, res
+    End If
+    Set factoryMechanism = res
+End Function
+
+Private Function makeKey(obj As datMechanism) As String
+    makeKey = obj.agreement.num__лс & "_" & obj.прибор_учета
+End Function
+
+'Private Function isNewerVersion(newMechanismInCollection As datMechanism, oldMechanismInCollection As datMechanism) As Boolean
+'    isNewerVersion = newMechanismInCollection.дата_текущих_показаний >= oldMechanismInCollection.дата_текущих_показаний
+'End Function
+
+'Проходим таблицу, загоняяя в объекты и коллекции вс енужные вещи, а потом печатаем
+Public Sub proccessTable(dataModel As shDataModel)
+    Dim mechanism As datMechanism
+    Set mechanism = factoryMechanism(dataModel)
+    mechanism.proccess dataModel
+   ' mechanism.getDayAndNight
+   ' IAggregator_recalculateSums
+End Sub
+
+Public Sub IAggregator_recalculateSums()
+    Dim mechanism As datMechanism, i As Integer
+    For i = 0 To Mechanisms.Count - 1
+        Set mechanism = Mechanisms.items()(i)
+       ' mechanism.getDayAndNight
+        'mechanism.IAggregator_recalculateSums
+        'Total = Total + Mechanism.потребление_квтч
+        
+    Next
+End Sub
+
+Public Sub IPrintableAsRow_printRow(dataView As shDataView, Optional numeration As Long = 0&)
+    dataView.printAgreement Me
+End Sub
